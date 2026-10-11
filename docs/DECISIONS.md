@@ -32,3 +32,10 @@ Each entry records the decision, the alternatives considered and why this one wa
 ## 2026-10-11: Never log or send the full command line
 
 - **Why:** commands (rclone especially) can contain passwords, keys and internal paths. Only the given job name and the program name are recorded.
+
+## 2026-10-11: Progress signal details (module 1)
+
+- **Folder progress** means more bytes, more files, or a file written to more recently (a file rewritten in place doesn't change size or count). "Now copying" is the most recently changed file.
+- **Folders are only looked at,** never opened or written. A folder that doesn't exist yet counts as empty, because the job may create it. Files or folders that vanish or can't be read mid-count are skipped, not fatal. Symbolic links aren't followed.
+- **rclone:** only a rising `stats.bytes` counts. A repeated stats line is not progress. The tracker also notes whether any stats line has been seen, so the watcher can warn if `--use-json-log` was forgotten.
+- **Output lines:** a non-blank line counts as progress unless it matches `--ignore-output` (case-insensitive), so heartbeat lines can't hide a stall.

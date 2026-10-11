@@ -1,0 +1,15 @@
+[project]
+name = "job-watch"
+version = "0.1.0"
+description = "Watches long jobs (tape restores, rclone transfers) and alerts once on finish, failure, stall or resume."
+requires-python = ">=3.11"
+license = "MIT"
+authors = [{ name = "Georgi Stoyanov" }]
+dependencies = []  # standard library only, by design
+
+[project.optional-dependencies]
+dev = ["pytest"]
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
