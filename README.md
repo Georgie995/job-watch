@@ -16,9 +16,9 @@ So people list folders "blindly" to guess. Worse, a job can **stall silently** a
 ## How it works
 
 ```
-job-watch run --name "Restore TAPE001" --watch /restore/TAPE001 -- <restore command>
-job-watch run --name "Upload ShowA" -- rclone copy <src> <dst> --use-json-log --stats 30s
-job-watch status          # from any terminal: what every job is doing
+python -m job_watch run --name "Restore TAPE001" --watch /restore/TAPE001 -- <restore command>
+python -m job_watch run --name "Upload ShowA" -- rclone copy <src> <dst> --use-json-log --stats 30s
+python -m job_watch status          # from any terminal: what every job is doing
 ```
 
 The job runs **exactly as given** after `--`, and its output still appears on screen. Every 30 seconds the watcher looks for **progress**:
@@ -42,7 +42,7 @@ The job runs **exactly as given** after `--`, and its output still appears on sc
 - **It exits with the job's own exit code** (127 if the command couldn't start, 130 if interrupted), so anything that calls it behaves as before.
 - **The full command line is never logged or sent.** Commands, especially rclone ones, can contain passwords, keys or internal paths. Only the job's name and the program's name are recorded.
 - **An ETA is shown only when the total is known** (rclone's own total, or `--expect-bytes`). Tape restore sizes often aren't known until the tape is indexed, so it doesn't guess.
-- **Alerting can never fail a job.** If delivery-ops-hub, its address or the secret is missing, job-watch says "alerts are off (reason)" once and logs locally. If n8n is unreachable, events wait in the outbox, and delivery-ops-hub's `resend` delivers them later.
+- **Alerting can never fail a job.** If delivery-ops-hub, its address or the secret is missing, job-watch says "alerts are off (reason)" once and logs locally. If n8n is unreachable, events wait in the outbox, and delivery-ops-hub's `resend` command delivers them later.
 
 ## Example (real output, synthetic job)
 
@@ -63,7 +63,7 @@ In delivery-ops-hub, the stall becomes an alert card (dry run): **"STALLED: Rest
 ## Set-up
 
 - **Requirements:** Python 3.11+, standard library only.
-- **Run it:** `python -m job_watch run …`.
+- **Run it:** `python -m job_watch run …` from this folder. No install step is needed.
 - **Alerts:** copy `job-watch.example.toml` to `job-watch.toml`, point it at your delivery-ops-hub folder and webhook, and set `OPS_HUB_WEBHOOK_SECRET`.
 - **Tests:**
   ```
@@ -75,7 +75,7 @@ In delivery-ops-hub, the stall becomes an alert card (dry run): **"STALLED: Rest
 
 - **Built for Linux, but developed and tested on Windows** with fake jobs. It avoids Windows-only and Linux-only features. A run on Linux with real jobs is still to be done.
 - **Large folders:** `--watch` walks the folder at each check, so very large folders may need a longer `--check-seconds`.
-- **Silent jobs:** a job that prints nothing, with no folder watched, can only be judged by its exit code. The watcher warns at the start.
+- **Silent jobs:** a job that prints nothing, with no folder watched, can only be judged by its exit code. When no folder is watched, the watcher prints a note at the start.
 - **Ctrl-C** stops the job too, which is normal terminal behaviour. Jobs that survive closing the terminal are out of scope.
 - **Speed** is the average since the start, not the current speed.
 
