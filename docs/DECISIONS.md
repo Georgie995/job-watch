@@ -39,3 +39,13 @@ Each entry records the decision, the alternatives considered and why this one wa
 - **Folders are only looked at,** never opened or written. A folder that doesn't exist yet counts as empty, because the job may create it. Files or folders that vanish or can't be read mid-count are skipped, not fatal. Symbolic links aren't followed.
 - **rclone:** only a rising `stats.bytes` counts. A repeated stats line is not progress. The tracker also notes whether any stats line has been seen, so the watcher can warn if `--use-json-log` was forgotten.
 - **Output lines:** a non-blank line counts as progress unless it matches `--ignore-output` (case-insensitive), so heartbeat lines can't hide a stall.
+
+## 2026-10-11: Watcher details (module 2)
+
+- **The job runs without a shell,** exactly as given after `--`. Its output is passed through to the screen. Watcher messages go to stderr with a `[job-watch]` prefix, so the job's own standard output stays clean for scripts.
+- **Exit codes:** job-watch exits with the job's own code. 127 means the command couldn't start (the usual "command not found" code). 130 means interrupted (Ctrl-C).
+- **Stalls:** "stalled" is sent once per stall; "resumed" is sent when progress returns (with how long it was stalled). If progress returns at the very end, "resumed" is still reported before "finished".
+- **Speed and ETA:** speed is the average since the start. The ETA uses it and is given only when a total is known (`--expect-bytes`, or rclone's own total).
+- **Status file:** `job-watch-status/<name>.json` holds the latest state. `<name>.history` gets one line per check, so a job's progress can be reviewed afterwards.
+- **Tidied after watching a real run:** status lines now use plain `|` separators, because `·` showed as `�` in a Windows terminal. A finished job says "last file …" instead of "now copying …", with no ETA.
+- **Tests:** fake jobs with a 1-second stall time. The timing-based tests were run three times in a row to check they're stable: 27/27 each time.
