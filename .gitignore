@@ -11,3 +11,4 @@ job-watch-status/
 job-watch-logs/
 .env
 *.secret
+job-watch-outbox/

@@ -34,3 +34,23 @@ What it gives you:
 - **Never the full command.** Commands can contain passwords, so only the job's name and the program's name are written down.
 
 **Tested by:** tiny fake jobs that copy files, go quiet and come back, fail with "drive not ready", print "still running" while stuck, or imitate rclone repeating the same numbers. In the tests "stuck" means 1 second instead of 10 minutes. 30 tests in total, stable across repeated runs.
+
+---
+
+## Module 3: alerts through the existing alert system
+
+**In one sentence:** when the watcher has something to say (finished, failed, stuck, going again, interrupted), it now sends it to the same alert system as the delivery checks, so the team sees it, and there's a record.
+
+**Like this:** the colleague watching the restore no longer has to come and find you. They post a note in the team's alert channel and write a line in the logbook. If the alert channel is down, they put the note in an in-tray and post it later. If there's no alert channel at all, they still write in their own notebook, and they never stop watching the job because of it.
+
+- **It reuses project 2's "post office":** the same sender, the same secret password and the same in-tray (outbox). Nothing is copied.
+- **Sending happens in the background,** so the watcher keeps checking the job while a message is on its way.
+- **In n8n** (project 2), job messages get **their own logbook** (`job-events.csv`), so the delivery-check log is unchanged. Each kind of event gets an alert card:
+  - **FINISHED: Restore TAPE001** (after 2:14:05, 1,204 files);
+  - **FAILED** (exit code and last error lines);
+  - **STALLED** (no progress for 10 minutes; nothing was stopped);
+  - **RESUMED**;
+  - **INTERRUPTED**.
+
+  "Started" is only written in the logbook.
+- **Proven end to end:** a made-up restore ran under job-watch, went quiet and recovered. The real n8n logbook received started, stalled, resumed and finished, with nothing stuck in the in-tray. All of project 2's original tests still pass.

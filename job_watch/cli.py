@@ -7,8 +7,11 @@
 """
 
 import argparse
+import os
 import sys
 
+from .alerts import AlertSender
+from .settings import SettingsError, load_settings
 from .status import describe, read_statuses
 from .watcher import JobConfig, Watcher
 
@@ -33,11 +36,40 @@ def main(argv=None):
         print("job-watch: error: give the job's command after --, e.g. job-watch run --name X -- rclone copy …",
               file=sys.stderr)
         return 2
+    try:
+        settings = load_settings(args.config)
+    except SettingsError as error:
+        print(f"job-watch: error: {error}", file=sys.stderr)
+        return 2
+    sinks = []
+    if not args.no_alerts:
+        sender = AlertSender(settings, os.environ.get("OPS_HUB_WEBHOOK_SECRET", "").strip() or _saved_user_secret())
+        if sender.enabled:
+            sinks.append(sender)
+        else:
+            print(f"[job-watch] alerts are off ({sender.reason}); events are logged locally only", file=sys.stderr)
     config = JobConfig(name=args.name, command=command, status_dir=args.status_dir, log_dir=args.log_dir,
                        watch_dirs=args.watch or [], expect_bytes=args.expect_bytes, expect_files=args.expect_files,
                        stall_seconds=args.stall_minutes * 60, check_seconds=args.check_seconds,
                        ignore_output=args.ignore_output)
-    return Watcher(config).run()
+    try:
+        return Watcher(config, sinks=sinks).run()
+    finally:
+        for sink in sinks:
+            sink.close()  # send anything still queued before exiting
+
+
+def _saved_user_secret():
+    """On Windows, a terminal opened before the secret was saved can't see it; read the saved value.
+    (Georgi hit exactly this in project 2's hands-on run.) Elsewhere: only the environment counts."""
+    if os.name != "nt":
+        return ""
+    import winreg
+    try:
+        with winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment") as key:
+            return str(winreg.QueryValueEx(key, "OPS_HUB_WEBHOOK_SECRET")[0]).strip()
+    except OSError:
+        return ""
 
 
 def _parser():
@@ -53,6 +85,7 @@ def _parser():
     run.add_argument("--check-seconds", type=float, default=30, help="how often to check (default 30)")
     run.add_argument("--ignore-output", help="regular expression for heartbeat lines that aren't progress")
     run.add_argument("--no-alerts", action="store_true", help="log only; don't send alerts")
+    run.add_argument("--config", default="job-watch.toml", help="settings file (default: %(default)s)")
     for sub in (run, commands.add_parser("status", help="show what every recorded job is doing")):
         sub.add_argument("--status-dir", default="job-watch-status")
     run.add_argument("--log-dir", default="job-watch-logs")

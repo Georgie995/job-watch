@@ -49,3 +49,13 @@ Each entry records the decision, the alternatives considered and why this one wa
 - **Status file:** `job-watch-status/<name>.json` holds the latest state. `<name>.history` gets one line per check, so a job's progress can be reviewed afterwards.
 - **Tidied after watching a real run:** status lines now use plain `|` separators, because `·` showed as `�` in a Windows terminal. A finished job says "last file …" instead of "now copying …", with no ETA.
 - **Tests:** fake jobs with a 1-second stall time. The timing-based tests were run three times in a row to check they're stable: 27/27 each time.
+
+## 2026-10-11: Alerts through delivery-ops-hub (module 3)
+
+- **Reuse, don't copy:** job-watch imports delivery-ops-hub's `post_json` and outbox from the folder named in `job-watch.toml`.
+- **Sending runs in a background thread,** so a slow or unreachable n8n never delays stall detection. At the end of a run, job-watch waits (up to 2 minutes) for queued events, so none are lost.
+- **When sending fails:** an undeliverable event goes to the outbox with a loud message, and delivery-ops-hub's `resend` delivers it later. "Logged but alert failed" (502) is reported, not retried.
+- **Alerting can never fail a job.** With no settings file, no delivery-ops-hub, no webhook address or no secret, job-watch says "alerts are off (reason)" once and logs locally. The job's exit code is always passed back unchanged.
+- **Windows convenience:** if `OPS_HUB_WEBHOOK_SECRET` isn't in the current terminal, job-watch reads the value saved for the Windows user. A terminal opened before the secret was saved can't see it, which is what happened in project 2's hands-on run. On Linux, only the environment counts.
+- **On the n8n side** (delivery-ops-hub): job events are a separate message kind with their own validation, log file (`job-events.csv`) and cards. `started` is logged only; all other events alert.
+- **Proof:** an end-to-end live test runs a made-up stalling restore under job-watch and checks that started → stalled → resumed → finished arrive in the real n8n log, with nothing left in the outbox.

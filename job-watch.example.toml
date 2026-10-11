@@ -1,0 +1,11 @@
+# Copy to job-watch.toml (git-ignored) to send alerts through delivery-ops-hub.
+# Without a settings file, job-watch still works and logs events locally only.
+# The webhook secret is never stored here: set OPS_HUB_WEBHOOK_SECRET (the same one delivery-ops-hub uses).
+
+ops_hub_path = "/path/to/delivery-ops-hub"                       # its sender and outbox are reused
+webhook_url = "http://localhost:5678/webhook/delivery-check"
+outbox_dir = "job-watch-outbox"                                    # undeliverable events wait here
+
+# Optional (defaults shown)
+# timeout_seconds = 10
+# retry_delays = [2, 4]
