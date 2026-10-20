@@ -59,3 +59,15 @@ Each entry records the decision, the alternatives considered and why this one wa
 - **Windows convenience:** if `OPS_HUB_WEBHOOK_SECRET` isn't in the current terminal, job-watch reads the value saved for the Windows user. A terminal opened before the secret was saved can't see it, which is what happened in project 2's hands-on run. On Linux, only the environment counts.
 - **On the n8n side** (delivery-ops-hub): job events are a separate message kind with their own validation, log file (`job-events.csv`) and cards. `started` is logged only; all other events alert.
 - **Proof:** an end-to-end live test runs a made-up stalling restore under job-watch and checks that started → stalled → resumed → finished arrive in the real n8n log, with nothing left in the outbox.
+
+## 2026-10-20: Tests run on GitHub after every push, and every Monday
+
+- **Need:** Georgi asked which automations would genuinely improve the published tools (research in his private notes). This repo had no automatic tests on GitHub, and it is built for Linux but was developed on Windows.
+- **Options:** (a) leave as is; (b) test this repo alone; (c) also fetch delivery-ops-hub, whose sender the alert tests reuse.
+- **Decision (Georgi, 2026-10-20):** (c), on Linux and Windows, Python 3.11 and 3.13. **Sibling repos (Georgi's choice):** each run fetches the latest delivery-ops-hub next to this repo, so the joined-up tests run on GitHub too, not only on the development PC. A change in a sibling can turn this repo's tests red; that is the point.
+  - **Every Monday at 06:00 UTC** the tests run again even if nothing was pushed, so a new Python version or a change in a sibling repo is noticed without anyone looking.
+  - **Safety:** read-only permissions, no secrets (so no AI call is possible), and only GitHub's own official actions.
+- **Known limits:**
+  - GitHub pauses scheduled runs in a repo with no activity for 60 days.
+  - **Fake jobs only.** Passing on GitHub's Linux machine is not the pending real Linux run with tape or rclone jobs, and the README says so.
+- **Tested by:** before pushing, each suite was run from fresh local clones laid out exactly as the workflow lays them out. A checker confirmed every workflow file follows the rules above, and each rule was broken on purpose once (write permission, no Monday run, a secret, a non-GitHub action, a wrong or missing sibling, the wrong machines); the checker caught every break. The workflow itself can only be fully proven on GitHub, by the first run after pushing.

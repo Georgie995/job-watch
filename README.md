@@ -1,5 +1,7 @@
 # job-watch
 
+[![tests](https://github.com/Georgie995/job-watch/actions/workflows/tests.yml/badge.svg)](https://github.com/Georgie995/job-watch/actions/workflows/tests.yml) *Tests run on Linux and Windows after every change, and every Monday.*
+
 Watches long jobs (tape restores and writes, cloud transfers) and says **once** when they finish, fail, **stall**, or start moving again. It shows plainly what's happening while they run. It never stops or changes the job.
 
 Alerts go through [delivery-ops-hub](https://github.com/Georgie995/delivery-ops-hub), the same n8n workflow, log and alert cards as delivery checks.
@@ -73,7 +75,7 @@ In delivery-ops-hub, the stall becomes an alert card (dry run): **"STALLED: Rest
 
 ## Known limits
 
-- **Built for Linux, but developed and tested on Windows** with fake jobs. It avoids Windows-only and Linux-only features. A run on Linux with real jobs is still to be done.
+- **Built for Linux, but developed on Windows.** It avoids Windows-only and Linux-only features. The tests run on GitHub's Linux and Windows machines too (the badge at the top), but **with fake jobs only**: a run on Linux with real tape or rclone jobs is still to be done.
 - **Large folders:** `--watch` walks the folder at each check, so very large folders may need a longer `--check-seconds`.
 - **Silent jobs:** a job that prints nothing, with no folder watched, can only be judged by its exit code. When no folder is watched, the watcher prints a note at the start.
 - **Ctrl-C** stops the job too, which is normal terminal behaviour. Jobs that survive closing the terminal are out of scope.
